@@ -1,0 +1,10 @@
+# Pull base image.
+FROM node:8
+
+MAINTAINER James Drawneek <james@first10.co.uk>
+
+# Install dependencies
+RUN npm install -g gulp gulp-cli
+
+# Define working directory.
+WORKDIR /workspace
