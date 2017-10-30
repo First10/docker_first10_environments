@@ -14,26 +14,69 @@ ARG AGENT_WORKDIR=/home/jenkins/agent
 RUN apt-get update && apt-get install -y && apt-get install apt-utils -y \
     && apt-get install curl bash git openssh-client openssl -y
 
+
+### INSTALL JAVA FOR JENKIN SLAVE CONTROL ###
+ENV JRE_SEMVER 1.8.0_152
+ENV JRE_VERSION 8u152
+ENV JRE_BUILD b16
+ENV JAVA_HOME /usr/lib/oracle-jre
+
+# Download and install the required version of Oracle's JRE
+RUN \
+  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
+  apt-get -y update && \
+  apt-get -y install software-properties-common && \
+  apt-get -y update && \
+  apt-get -y install curl wget unzip nano git && \
+  apt-get -y update && \
+  apt-get -y upgrade
+
+RUN echo "deb http://ftp.de.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
+RUN apt-get update
+RUN apt install -t jessie-backports openjdk-8-jre-headless ca-certificates-java -y
+
+
+RUN java -version
+
+ARG JAVA_URL='http://download.oracle.com/otn-pub/java/jdk/8u152-b16/aa0333dd3019491ca4f6ddbe78cdb6d0/jre-8u152-linux-x64.tar.gz'
+RUN wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" ${JAVA_URL}
+
+RUN apt-get install openjdk-8-jre-zero -y
+
+
+RUN java -version
+RUN  apt-get -y clean && \
+  apt-get -y autoclean && \
+  apt-get -y autoremove && \
+  apt-get purge -y $(apt-cache search '~c' | awk '{ print $2 }') && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/cache/apt && \
+  rm -rf /tmp/*
+
 USER root
 
 ARG JENKINS_REMOTING_VERSION=3.12
+
+RUN mkdir /home/jenkins/bin
 
 # See https://github.com/jenkinsci/docker-slave/blob/2.62/Dockerfile#L32
 RUN curl --create-dirs -sSLo /usr/share/jenkins/slave.jar https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/$JENKINS_REMOTING_VERSION/remoting-$JENKINS_REMOTING_VERSION.jar \
   && chmod 755 /usr/share/jenkins \
   && chmod 644 /usr/share/jenkins/slave.jar
 
+RUN curl https://raw.githubusercontent.com/jenkinsci/docker-jnlp-slave/master/jenkins-slave --output /home/jenkins/bin/jenkins-slave
 
-RUN curl https://raw.githubusercontent.com/jenkinsci/docker-jnlp-slave/master/jenkins-slave --output /usr/local/bin/jenkins-slave
-
-RUN cd /usr/local/bin/ && ls -la
+RUN chmod +x /home/jenkins/bin/jenkins-slave
+RUN echo "export PATH=$PATH:/home/jenkins/bin" >> /root/.bashrc
 
 
 RUN chmod a+rwx /home/jenkins
 WORKDIR /home/jenkins
 
-
+RUN chown -R jenkins:$(id -gn jenkins) /home/jenkins/.config
 USER jenkins
+
+
 ENV AGENT_WORKDIR=${AGENT_WORKDIR}
 RUN mkdir /home/jenkins/.jenkins && mkdir -p ${AGENT_WORKDIR}
 
@@ -42,4 +85,4 @@ VOLUME ${AGENT_WORKDIR}
 WORKDIR /home/jenkins
 
 
-ENTRYPOINT ["jenkins-slave"]
+ENTRYPOINT ["/home/jenkins/bin/jenkins-slave"]
