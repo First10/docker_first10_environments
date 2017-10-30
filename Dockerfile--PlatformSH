@@ -16,21 +16,8 @@ RUN apt-get update && apt-get install -y && apt-get install apt-utils -y \
 
 
 ### INSTALL JAVA FOR JENKIN SLAVE CONTROL ###
-ENV JRE_SEMVER 1.8.0_152
-ENV JRE_VERSION 8u152
-ENV JRE_BUILD b16
-ENV JAVA_HOME /usr/lib/oracle-jre
 
-# Download and install the required version of Oracle's JRE
-RUN \
-  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
-  apt-get -y update && \
-  apt-get -y install software-properties-common && \
-  apt-get -y update && \
-  apt-get -y install curl wget unzip nano git && \
-  apt-get -y update && \
-  apt-get -y upgrade
-
+# Download and install the openJDK 8
 RUN echo "deb http://ftp.de.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
 RUN apt-get update
 RUN apt install -t jessie-backports openjdk-8-jre-headless ca-certificates-java -y
