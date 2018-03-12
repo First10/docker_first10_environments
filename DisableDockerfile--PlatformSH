@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y && apt-get install apt-utils -y \
 # Download and install the openJDK 8
 RUN echo "deb http://ftp.de.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
 RUN apt-get update
-RUN apt install -t jessie-backports openjdk-8-jre-headless ca-certificates-java -y
-
+RUN apt install -t jessie-backports openjdk-8-jdk-headless ca-certificates-java -y
+RUN /usr/sbin/update-java-alternatives -s java-1.8.0-openjdk-amd64
 
 RUN java -version
 
@@ -35,15 +35,15 @@ RUN  apt-get -y clean && \
 
 USER root
 
-ARG JENKINS_REMOTING_VERSION=3.12
+ARG JENKINS_REMOTING_VERSION=3.10
 
-RUN mkdir /home/jenkins/bin
 
 # See https://github.com/jenkinsci/docker-slave/blob/2.62/Dockerfile#L32
-RUN curl --create-dirs -sSLo /usr/share/jenkins/slave.jar https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/$JENKINS_REMOTING_VERSION/remoting-$JENKINS_REMOTING_VERSION.jar \
+RUN curl --create-dirs -sSLo /usr/share/jenkins/slave.jar http://ec2-34-241-147-36.eu-west-1.compute.amazonaws.com:8080/jnlpJars/slave.jar \
   && chmod 755 /usr/share/jenkins \
   && chmod 644 /usr/share/jenkins/slave.jar
 
+RUN mkdir /home/jenkins/bin/
 RUN curl https://raw.githubusercontent.com/jenkinsci/docker-jnlp-slave/master/jenkins-slave --output /home/jenkins/bin/jenkins-slave
 
 RUN chmod +x /home/jenkins/bin/jenkins-slave
@@ -53,12 +53,12 @@ RUN echo "export PATH=$PATH:/home/jenkins/bin" >> /root/.bashrc
 RUN chmod a+rwx /home/jenkins
 WORKDIR /home/jenkins
 
-RUN chown -R jenkins:$(id -gn jenkins) /home/jenkins/.config
+#RUN chown -R jenkins:$(id -gn jenkins) /home/jenkins/.config
 USER jenkins
 
 
 ENV AGENT_WORKDIR=${AGENT_WORKDIR}
-RUN mkdir /home/jenkins/.jenkins && mkdir -p ${AGENT_WORKDIR}
+#RUN mkdir /home/jenkins/.jenkins && mkdir -p ${AGENT_WORKDIR}
 
 VOLUME /home/jenkins/.jenkins
 VOLUME ${AGENT_WORKDIR}

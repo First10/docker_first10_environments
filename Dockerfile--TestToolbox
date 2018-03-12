@@ -1,0 +1,115 @@
+FROM jenkinsci/jnlp-slave
+
+MAINTAINER James Drawneek <james@first10.co.uk>
+
+# Environment variables
+ENV NVM_VERSION 0.31.2
+ENV NVM_DIR /usr/local/nvm
+
+ENV NODE_VERSION 8.8.1
+
+USER root
+
+RUN mkdir /usr/local/nvm
+RUN chmod 777 /usr/local/nvm
+
+RUN adduser jenkins sudo
+RUN echo "jenkins:Docker!" | chpasswd
+
+# Update the package source list so we can get usful packages.
+RUN touch /etc/apt/sources.list.d/extra-repos.list
+RUN echo "deb http://deb.debian.org/debian stretch main" >> /etc/apt/sources.list.d/extra-repos.list
+RUN echo "deb-src http://deb.debian.org/debian stretch main" >> /etc/apt/sources.list.d/extra-repos.list
+
+RUN echo "deb http://packages.linuxmint.com debian import" >> /etc/apt/sources.list.d/extra-repos.list
+RUN wget mozilla.debian.net/pkg-mozilla-archive-keyring_1.1_all.deb
+RUN dpkg -i pkg-mozilla-archive-keyring_1.1_all.deb
+RUN apt-get update
+RUN apt-get install firefox -y --allow-unauthenticated
+
+RUN apt-get update
+
+# Replace shell with bash so we can source files etc.
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+RUN java -version
+
+
+# Install PHP and Platofrm Cli
+RUN apt-get install vim -y
+RUN apt-get install php7.0 -y
+RUN apt-get install php-curl -y
+RUN apt-get install openssl -y
+
+RUN apt-get install unzip -y
+
+RUN php -v
+
+
+# Switch to Jenkins user for testing etc.
+USER jenkins
+
+# Install nvm
+# https://github.com/creationix/nvm#install-script
+RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v$NVM_VERSION/install.sh | bash
+
+# Install node and npm.
+RUN source $NVM_DIR/nvm.sh \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && nvm use default
+
+
+# Add node and npm to path so the commands are available.
+ENV PATH /usr/local/share/npm/bin:$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+# Confirm installation
+RUN node -v
+RUN npm -v
+
+# Add NPX to help deal with bin path and permission issues.
+RUN npm install -g npx
+
+# Add aws sdk for communicating with aws services.
+RUN npm install aws-sdk -g
+
+# Install testing software
+
+#RUN npm install eslint -g
+
+
+# http://facebook.github.io/jest/
+#RUN npm install jest -g
+
+# https://www.npmjs.com/package/puppeteer#faq
+#RUN npm install puppeteer -g
+
+# Install the platform cli and add it to path for easy access.
+RUN curl -sS https://platform.sh/cli/installer | php
+ENV PATH /home/jenkins/.platformsh/bin:$PATH
+
+
+COPY --chown=jenkins:jenkins portal /home/jenkins/portal
+COPY --chown=jenkins:jenkins test /home/jenkins/portal/test
+
+USER root
+
+ARG CHROME_VERSION="google-chrome-stable"
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+  && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+  && apt-get update -qqy \
+  && apt-get -qqy install \
+    ${CHROME_VERSION:-google-chrome-stable} \
+  && rm /etc/apt/sources.list.d/google-chrome.list \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+
+# Make sure the local config is accessible by the jenkins user.
+RUN chown -R jenkins:$(id -gn jenkins) /home/jenkins/.config
+USER jenkins
+
+
+#ENTRYPOINT ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["jenkins-slave"]
+
+# rm -R -f portal -y && rm -R -f test -y && cp -R /Users/jamesdrawneek/Sites/rc-portal portal && cp -R /Users/jamesdrawneek/Sites/NodeAppTester test && cd portal && rm -R node_modules && rm package-lock.json
