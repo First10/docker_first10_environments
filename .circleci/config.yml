@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker:latest
+      - image: looztra/alpine-docker-client:latest
     steps:
       - checkout
       # start proprietary DB using private Docker image
