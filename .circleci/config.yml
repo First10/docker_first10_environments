@@ -9,4 +9,5 @@ jobs:
       # with credentials stored in the UI
       - run: echo ${PWD}
       - run: ls -la
+      - run: apk add docker && service docker start
       - run: ./pushToHub.sh
