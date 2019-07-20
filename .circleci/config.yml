@@ -13,7 +13,7 @@ jobs:
       - run: echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories
       - run: apk update
       - run: apk add busybox
-      - run: apk add libseccomp@2.4.1-r0
+      - run: apk add libseccomp-2.4.1-r0
       - run: apk add --upgrade apk-tools@edge
       - run: apk add docker && service docker start
       - run: ./pushToHub.sh
