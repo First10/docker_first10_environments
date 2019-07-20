@@ -15,4 +15,5 @@ jobs:
       - run: apk add --upgrade apk-tools@edge
       - run: apk add busybox
       - run: apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main --repository http://dl-cdn.alpinelinux.org/alpine/edge/community docker
+      - run: service docker start
       - run: ./pushToHub.sh
