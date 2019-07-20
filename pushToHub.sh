@@ -1,13 +1,18 @@
 #!/bin/bash
+#https://github.com/Yelp/docker-push-latest-if-changed
+
+export $(xargs <.env)
 
 FILES="${PWD}/"
-DOCKER_ACCOUNT=jmdrawneek
+
+echo "$DOCKER_PWD" | docker login --username ${DOCKER_ACCOUNT} --password-stdin
+
 
 for f in ${FILES}*
 do
 
 # Only process files with Dockerfile in their name.
-if [[ ${f} == *Dockerfile* ]]; then
+if [[ ${f} == */Dockerfile* ]]; then
 
 # Convert string to lowercase.
 LOWERCASE=$(echo $(basename ${f}) | tr '[:upper:]' '[:lower:]')
