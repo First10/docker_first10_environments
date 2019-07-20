@@ -9,7 +9,7 @@ jobs:
       # with credentials stored in the UI
       - run: echo ${PWD}
       - run: ls -la
-      - run: apk add --upgrade apk-tools@edge
       - run: echo "http://dl-cdn.alpinelinux.org/alpine/latest-stable/community" > /etc/apk/repositories && apk update
+      - run: apk add --upgrade apk-tools@edge
       - run: apk add docker && service docker start
       - run: ./pushToHub.sh
